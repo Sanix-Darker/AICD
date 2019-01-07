@@ -1,8 +1,8 @@
-//Cervo, automate integrer dans le systeme Kara
+//AICD > , automate integrer dans le systeme Kara
 // HI project [For Kara]
 // Author: S@n1x-d4rk3r [https://github.com/Sanix-Darker]
 
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 
 #include <AFMotor.h>
 
@@ -40,55 +40,56 @@ void loop()
 //      delay(300);
 //      JsonObject& course = jsonBuffer.parseObject(getCourse());
 
-      Serial.println("Cervo Starting the course...");
-      StaticJsonBuffer<200> jsonBuffer;
-      char json[] = "[1,2,3]";
-      JsonArray& course = jsonBuffer.parseArray(getCourse());
-      for (int i = 0; i<course.measureLength(); i++){
-        Serial.print("course[i]['x']: ");
-        Serial.println(course[i]["x"]);
+      Serial.println("AICD >  Starting the course...");
+//      StaticJsonBuffer<200> jsonBuffer;
+//      JsonArray& course = jsonBuffer.parseArray(getCourse());
+      const int array_x[15] = {1,0,-1,1,0,-1,0,1,1,-1,1,-1,0,0,0};
+      const int array_y[15] = {-1,1,0,0,1,0,1,-1,0,0,0,1,1,0,-1};
+      const int count = sizeof(array_y); 
+      for (int i = 0; i < count; i++){
+        Serial.print("array_y[i]: ");
+        Serial.println(array_y[i]);
 
-        Serial.print("course[i]['y']: ");
-        Serial.println(course[i]["y"]);
-
+        Serial.print("array_x[i]: ");
+        Serial.println(array_x[i]);
         
-        if(course[i]["x"] > 0){
+        if(array_x[i] > 0){
         
-          if(course[i]["y"] > 0){
+          if(array_y[i] > 0){
 
             check_and_go_right();
             
-          }else if(course[i]["y"] < 0){
+          }else if(array_y[i] < 0){
             
-            check_and_go_right(); // go right back ==> macharriere en allant vers la droite
+            check_and_go_back_right(); // go right back ==> macharriere en allant vers la droite
           
           }else{
-            check_and_go_right();
-            check_and_go_right(); // ultimate right
+
+            check_and_go_several_right();// ultimate right
+          
           }
           
-        }else if(course[i]["x"] < 0){
+        }else if(array_x[i] < 0){
 
-          if(course[i]["y"] > 0){
+          if(array_y[i] > 0){
 
             check_and_go_left();
             
-          }else if(course[i]["y"] < 0){
+          }else if(array_y[i] < 0){
             
-            check_and_go_left(); // go left back ==> macharriere en allant vers la droite
+            check_and_go_back_left(); // go left back ==> macharriere en allant vers la droite
           
           }else{
-            check_and_go_left();
-            check_and_go_left(); // ultimate right
+            check_and_go_several_left(); // ultimate right
           }
           
         }else{
           
-          if(course[i]["y"] > 0){
+          if(array_y[i] > 0){
 
             check_and_go_forward();
             
-          }else if(course[i]["y"] < 0){
+          }else if(array_y[i] < 0){
             
             check_and_go_backward(); // go right back ==> macharriere en allant vers la droite
           
@@ -100,7 +101,7 @@ void loop()
       
       Stop();
       Serial.println("Destination reached!");
-      delay(50000);
+      delay(150000);
     }else{ // in Maual mode
 
       // Waiting for a command to work and operate
@@ -144,6 +145,39 @@ void check_and_go_left(){
     }  
 }
 
+void check_and_go_several_right(){
+    if(checkObstacleGo_or_Stop()){
+      go_several_right();
+    }else{
+     Stop(); 
+    }  
+}
+
+void check_and_go_several_left(){
+    if(checkObstacleGo_or_Stop()){
+      go_several_left();
+    }else{
+     Stop(); 
+    }  
+}
+
+void check_and_go_back_right(){
+    if(checkObstacleGo_or_Stop()){
+      go_back_right();
+    }else{
+     Stop(); 
+    }  
+}
+
+void check_and_go_back_left(){
+    if(checkObstacleGo_or_Stop()){
+      go_back_left();
+    }else{
+     Stop(); 
+    }  
+}
+
+
 /**
  * checkObstacleGo_or_Stop 
  */
@@ -154,10 +188,10 @@ bool checkObstacleGo_or_Stop(){
     while(!avoidObstacle() && num_try < 3){
       Serial.println("The Road look blocking...");
       num_try = num_try + 1;
-      Serial.println("Cervo calculating a solution...");
+      Serial.println("AICD >  calculating a solution...");
     }
     if(num_try >= 3){
-      Serial.println("Cervo can not continious!");
+      Serial.println("AICD >  can not continious!");
       return false;
     }else{
       return true;  
@@ -167,14 +201,14 @@ bool checkObstacleGo_or_Stop(){
   }
 }
 
-/*
- * checkCourse This method get the course
- */
-String getCourse()
-{
-  // this method is to get a programmated course
-  return "[{\"x\":0, \"y\":1}, {\"x\":0, \"y\":0}, {\"x\":1, \"y\":0}, {\"x\":0, \"y\":0}]";
-}
+// /*
+//  * checkCourse This method get the course
+//  */
+// String getCourse()
+// {
+//   // this method is to get a programmated course
+//   return "[{\"x\":0, \"y\":1}, {\"x\":0, \"y\":0}, {\"x\":1, \"y\":0}, {\"x\":0, \"y\":0}]";
+// }
 
 // Just to switch mode from auto to maual or viseversat
 void switchMode(bool wantAuto){
@@ -188,7 +222,7 @@ bool detectProximity()
 {
   val = analogRead(sensorpin);        // reads the value of the sharp sensor
   Serial.println(val);                // prints the value of the sensor to the serial monitor
-  return val > 0 ? true : false;
+  return val > 0 ? false : false;
 }
 
 /**
@@ -235,12 +269,61 @@ void go_right()
   delay(100);
 }
 
+
+/**
+ * go_several_left to make the car go left
+ */
+void go_several_left()
+{
+  Serial.println("Going several to left ...");
+  //motor1.run(BACKWARD);
+  motor2.run(FORWARD);
+  delay(100);
+}
+
+/**
+ * go_several_right to make the car go right
+ */
+void go_several_right()
+{
+  Serial.println("Going several to right ...");
+  motor1.run(FORWARD);
+  //motor2.run(BACKWARD);
+  delay(100);
+}
+
+
+/**
+ * go_left to make the car go left
+ */
+void go_back_left()
+{
+  Serial.println("Going back to left ...");
+  go_backward();
+  //motor1.run(BACKWARD);
+  motor2.run(BACKWARD);
+  delay(100);
+}
+
+/**
+ * go_right to make the car go right
+ */
+void go_back_right()
+{
+  Serial.println("Going back to right ...");
+  go_backward();
+  motor1.run(BACKWARD);
+  //motor2.run(BACKWARD);
+  delay(100);
+}
+
+
 /**
  * Stop to stop the car
  */
 void Stop()
 {
-  Serial.println("Cervo Stop the engine.");
+  Serial.println("AICD >  Stop the engine.");
   motor1.run(RELEASE);
   motor2.run(RELEASE);
   delay(100);
@@ -325,26 +408,26 @@ bool avoidObstacle()
 
 void remoteControl()
 {
-    command = Serial.read();
-    // Remote control MODE
-    if(command=='1')  //when the bluetooth module recieves 1 the car moves forward
-    {
-     go_forward(); 
-    }
-    if(command=='2')  //when the bluetooth module recieves 2 the car moves backward
-    {
-     go_backward(); 
-    }
-    if(command=='3') //when the bluetooth module recieves 3 the car moves left
-    {
-     go_left(); 
-    }
-    if(command=='4')  //when the bluetooth module recieves 4 the car moves right
-    {
-     go_right(); 
-    }
-    if(command=='5') //when the bluetooth module recieves 5 the car stops
-    {
-     Stop(); 
-    }  
+//    command = Serial.read();
+//    // Remote control MODE
+//    if(command=='1')  //when the bluetooth module recieves 1 the car moves forward
+//    {
+//     go_forward(); 
+//    }
+//    if(command=='2')  //when the bluetooth module recieves 2 the car moves backward
+//    {
+//     go_backward(); 
+//    }
+//    if(command=='3') //when the bluetooth module recieves 3 the car moves left
+//    {
+//     go_left(); 
+//    }
+//    if(command=='4')  //when the bluetooth module recieves 4 the car moves right
+//    {
+//     go_right(); 
+//    }
+//    if(command=='5') //when the bluetooth module recieves 5 the car stops
+//    {
+//     Stop(); 
+//    }  
 }
